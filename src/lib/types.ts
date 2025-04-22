@@ -1,9 +1,9 @@
-export type Crumb<M = any> = {
+export type Crumb<Metadata = never> = {
   title?: string;
   url?: string;
-  metadata?: M;
+  metadata?: Metadata;
 };
-export type ModuleData = {
+export type ModuleData<PageData = unknown> = {
   pageTitle?: string;
-  getPageTitle?: (data: any) => string;
+  getPageTitle?: (pageData: PageData) => string;
 };

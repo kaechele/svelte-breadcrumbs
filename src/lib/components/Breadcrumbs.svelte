@@ -1,4 +1,4 @@
-<script lang="ts" generics="Metadata = any">
+<script lang="ts" generics="Metadata = never, PageData = unknown">
   import type { Crumb, ModuleData } from "$lib/types.js";
   import { type Snippet, onMount } from "svelte";
 
@@ -15,9 +15,16 @@
     routeId: string | null;
     url: URL;
     crumbs?: Crumb<Metadata>[];
-    routeModules?: Record<string, ModuleData>;
-    pageData: any;
-    children?: Snippet<[any]>;
+    routeModules?: Record<string, ModuleData<PageData>>;
+    pageData: PageData;
+    children?: Snippet<
+      [
+        {
+          crumbs: Crumb<Metadata>[];
+          routeModules?: Record<string, ModuleData<PageData>>;
+        },
+      ]
+    >;
     skipRoutesWithNoPage?: boolean;
   }
 
@@ -42,7 +49,7 @@
   });
 
   // Given a module and a crumb, determine the page title
-  function getPageTitleFromModule(module: ModuleData | undefined) {
+  function getPageTitleFromModule(module: ModuleData<PageData> | undefined) {
     if (module?.pageTitle) {
       return module.pageTitle;
     }

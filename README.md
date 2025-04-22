@@ -18,14 +18,12 @@ The title is then generated with the following priority, each one acting as a fa
 
 1. Page data `crumbs` property which overrides the entire `crumbs` array
 2. `pageTitle: string` variable in the svelte page's module context
-3. `getPageTitle(data: any) -> string` function in the svelte page's module context
+3. `getPageTitle(data: PageData) => string` function in the svelte page's module context
 4. The value in the original URL route path
 
 Breadcrumb title definition can now exist within the view itself!
 
-The biggest drawback of this solution is that getter functions have no way of knowing the data that will be provided to them at compile time which can make development a bit tricky. It can be hard to know if a page has the data the getter will need, but this is why the fallbacks exist.
-
-Another drawback I see is that the glob import in `Breadcrumbs.svelte` may be inefficient, specifically may be storing extra data in memory. This hasn't proven to be an issue for my project, but I'm not completely sure how it would fare in larger projects with more Svelte files...
+One drawback I see is that the glob import in `Breadcrumbs.svelte` may be inefficient, specifically may be storing extra data in memory. This hasn't proven to be an issue for my project, but I'm not completely sure how it would fare in larger projects with more Svelte files...
 
 ## Usage
 
@@ -42,7 +40,7 @@ In `+layout.svelte`:
 ```svelte
 <!--
 Add the `Breadcrumbs` component and feed in the current page url
-and the route id.
+and the route id via `page` imported from `$app/state`.
 -->
 <Breadcrumbs url={$page.url} routeId={$page.route.id}>
   {#snippet children({ crumbs })}
@@ -68,7 +66,7 @@ In the example above, `Breadcrumbs.svelte` will handle grabbing all of the modul
 
 ```svelte
 <script lang="ts">
-  let routeModules = $state({} as Record<string, ModuleData>);
+  let routeModules = $state({} as Record<string, ModuleData<PageData>>);
 
   onMount(async () => {
     // Note: that the path prefix here is now /src/svelte/
@@ -94,7 +92,7 @@ In the example above, `Breadcrumbs.svelte` will handle grabbing all of the modul
 The `Breadcrumbs` component will have access to your Svelte components based on the route id and will be looking for the following exported variables in the [Module Context](https://learn.svelte.dev/tutorial/module-exports):
 
 - `pageTitle: string`
-- `getPageTitle: (data: any) -> string`
+- `getPageTitle: (data: PageData) => string`
 
 `getPageTitle` will receive the value of `$page.data` passed through in the `Breadcrumbs` prop. (see the `Breadcrumbs` usage above).
 
@@ -102,8 +100,10 @@ Here is an example:
 
 ```svelte
 <script module lang="ts">
+  import type { PageData } from "./$types";
+
   // Getter function
-  export function getPageTitle(data: any) {
+  export function getPageTitle(data: PageData) {
     // When this is undefined it will fall back to the value in the route (in this case the todo id for the route /todos/1/edit)
     return data.todo?.name;
   }
@@ -115,16 +115,19 @@ Here is an example:
 ## Types
 
 ```ts
-export type Crumb = {
+// The generic type `Metadata` can be specified by the user.
+// If unspecified it is expected to never exist on the type.
+export type Crumb<Metadata = never> = {
   title?: string; // The default title being the sanitized page inferred from the URL (e.g. Edit)
   url?: string; // The URL of this page (e.g. /todos/1/edit)
-  metadata?: any; // Any metadata you want passed through to the Breadcrumbs component
+  metadata?: Metadata; // Any metadata you want passed through to the Breadcrumbs component
 };
 
 // The data we will be grabbing from each +page.svelte file
-export type ModuleData = {
+// The generic type `PageData` is expected to be the `PageData` type passed through from the `+page.svelte` where `getPageTitle` is used (see example above).
+export type ModuleData<PageData = unknown> = {
   pageTitle?: string;
-  getPageTitle?: (data: any) => string;
+  getPageTitle?: (data: PageData) => string;
 };
 ```
 
@@ -136,11 +139,13 @@ This component will provide an array of `Crumb`s to a single slot. The final `Cr
 
 ### Props
 
-#### `routeModules: Record<string, ModuleData>`
+#### `routeModules: Record<string, ModuleData<PageData>>`
 
 > Optional
 
 The exported data for each module. If not provided it will be populated on mount with an eager glob import of `"/src/routes/**/*.svelte"` which is SvelteKit specific.
+
+If manually providing this value you should import and then explicitly pass through `PageData` from within your `+page.svelte` or `+layout.svelte` file
 
 Completely disable this feature by passing in an empty value as shown below.
 
@@ -186,13 +191,23 @@ Route id for the current page. In Sveltekit this is `$page.route.id`.
 
 URL for the current page. Used to generate the url that each breadcrumb should link to when clicked on. In SvelteKit this is `$page.url`.
 
-#### `pageData: any`
+#### `pageData: PageData`
 
 > Optional
 
-Page Data to pass through to the `getPageTitle` function living in a route's `page.svelte` file
+Page Data to pass through to the `getPageTitle` function living in a route's `+page.svelte` file/
 
-#### `crumbs: Crumb[]`
+The `PageData` type should be imported and then explicitly passed through from within the `+page.svelte` file, as it gets auto-generated by the Svelte compiler. If `PageData` is unspecified it defaults to `unknown`:
+
+```ts
+import type { PageData } from "./$types";
+
+export function getPageTitle(pageData: PageData) {
+  ...
+};
+```
+
+#### `crumbs: Crumb<T>[]`
 
 > Optional
 
@@ -204,7 +219,7 @@ A list of `Crumb`s that will override/bypass any breadcrumb generation via route
 
 When set to true, it will completely skip rendering breadcrumbs if there is no page for the route.
 
-#### `titleSanitizer(title: string) -> string`
+#### `titleSanitizer: (title: string) => string`
 
 > Optional
 
