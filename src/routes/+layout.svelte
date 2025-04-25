@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import type { Crumb } from "$lib";
   import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
   import type { Snippet } from "svelte";
@@ -10,13 +10,15 @@
 
   let { children }: Props = $props();
 
-  let pageDataCrumbs = $derived($page.data.crumbs as Crumb<MyCrumbMetadata>[] | undefined);
+  let pageDataCrumbs = $derived(
+    page.data.crumbs as Crumb<MyCrumbMetadata>[] | undefined
+  );
 </script>
 
 <Breadcrumbs
-  url={$page.url}
-  routeId={$page.route.id}
-  pageData={$page.data}
+  url={page.url}
+  routeId={page.route.id}
+  pageData={page.data}
   crumbs={pageDataCrumbs}
 >
   {#snippet children({ crumbs })}

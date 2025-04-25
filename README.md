@@ -42,7 +42,7 @@ In `+layout.svelte`:
 Add the `Breadcrumbs` component and feed in the current page url
 and the route id via `page` imported from `$app/state`.
 -->
-<Breadcrumbs url={$page.url} routeId={$page.route.id}>
+<Breadcrumbs url={page.url} routeId={page.route.id}>
   {#snippet children({ crumbs })}
     <div>
       <span><a href="/">Home</a></span>
@@ -77,8 +77,8 @@ In the example above, `Breadcrumbs.svelte` will handle grabbing all of the modul
 
 <!-- Note: routeModules and globImportPrefix passed through -->
 <Breadcrumbs
-  url={$page.url}
-  routeId={$page.route.id}
+  url={page.url}
+  routeId={page.route.id}
   {routeModules}
   globImportPrefix={'/src/svelte/'}
   let:crumbs
@@ -94,7 +94,7 @@ The `Breadcrumbs` component will have access to your Svelte components based on 
 - `pageTitle: string`
 - `getPageTitle: (data: PageData) => string`
 
-`getPageTitle` will receive the value of `$page.data` passed through in the `Breadcrumbs` prop. (see the `Breadcrumbs` usage above).
+`getPageTitle` will receive the value of `page.data` passed through in the `Breadcrumbs` prop. (see the `Breadcrumbs` usage above).
 
 Here is an example:
 
@@ -183,13 +183,13 @@ relPathToRoutes + routeId + "/+page.svelte";
 
 > Optional
 
-Route id for the current page. In Sveltekit this is `$page.route.id`.
+Route id for the current page. In SvelteKit this is `page.route.id`.
 
 #### `url: string`
 
 > Required
 
-URL for the current page. Used to generate the url that each breadcrumb should link to when clicked on. In SvelteKit this is `$page.url`.
+URL for the current page. Used to generate the url that each breadcrumb should link to when clicked on. In SvelteKit this is `page.url`.
 
 #### `pageData: PageData`
 
@@ -211,7 +211,7 @@ export function getPageTitle(pageData: PageData) {
 
 > Optional
 
-A list of `Crumb`s that will override/bypass any breadcrumb generation via routes. In SvelteKit if you pass `$page.data.crumbs` or something similar you will be able to override any bread crumbs via page loads.
+A list of `Crumb`s that will override/bypass any breadcrumb generation via routes. In SvelteKit if you pass `page.data.crumbs` or something similar you will be able to override any bread crumbs via page loads.
 
 #### `skipRoutesWithNoPage: bool`
 
